@@ -20,20 +20,7 @@ type Technologies struct {
 	Tech5 string `json:"tech5"`
 }
 
-type Tech struct {
-	Name     string `json:"name"`
-	ImageURL string `json:"image_url"`
-}
-
-var availableTechs = []Tech{
-	{"Go", "/images/go.png"},
-	{"PHP", "/images/php.png"},
-	{"Laravel", "/images/laravel.png"},
-	{"React", "/images/react.png"},
-	{"AWS", "/images/aws.png"},
-}
-
-func handlePostRequest(w http.ResponseWriter, r *http.Request) {
+func genBanner(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -103,7 +90,20 @@ func generateBannerImage(techs Technologies) image.Image {
 	return dc.Image()
 }
 
-func handleGetLogos(w http.ResponseWriter, r *http.Request) {
+type Tech struct {
+	Name     string `json:"name"`
+	ImageURL string `json:"image_url"`
+}
+
+var availableTechs = []Tech{
+	{"Go", "/images/go.png"},
+	{"PHP", "/images/php.png"},
+	{"Laravel", "/images/laravel.png"},
+	{"React", "/images/react.png"},
+	{"AWS", "/images/aws.png"},
+}
+
+func getLogos(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	host := r.Host
@@ -119,7 +119,7 @@ func handleGetLogos(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(techsWithFullURLs)
 }
 
-func handleGetTechOptions(w http.ResponseWriter, r *http.Request) {
+func listTechOptions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	techNames := make([]string, len(availableTechs))
