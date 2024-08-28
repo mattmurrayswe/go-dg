@@ -8,13 +8,15 @@ import (
 
 func main() {
 	//bannerdev
-	http.HandleFunc("/gen-banner", genBanner)
-	http.HandleFunc("/logos", getLogos) // Handles requests to get logos with URLs
-	http.HandleFunc("/tech-options", listTechOptions) // Handles requests to get only tech names
+	http.HandleFunc("/gen-banner", genBanner)         //POST
+	http.HandleFunc("/logos", getLogos)               //GET
+	http.HandleFunc("/tech-options", listTechOptions) //GET
 
-	//digitalgarage
-	http.HandleFunc("/brands", handleGetTechOptions)
-	http.HandleFunc("/models", handleGetTechOptions)
+	//cars-models-brands
+	http.HandleFunc("/brands/all", listAllBrands) //GET
+	http.HandleFunc("/brands", listDgBrands) //GET
+	http.HandleFunc("/brands/omitted", listDgOmmitedBrands) //GET
+	http.HandleFunc("/models", listModels) //GET
 
 	fmt.Println("Server listening on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
