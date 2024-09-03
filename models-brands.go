@@ -6,43 +6,39 @@ import (
 )
 
 var (
+	brands = []string{
+		"Acura", "Adamo", "Agrale", "Alfa Romeo", "Americar", "Asia", "Aston Martin", "Audi",
+		"Austin-Healey", "Avallone", "Beach", "Bentley", "Bianco", "BMW", "BRM", "Bugre", "Bugway",
+		"Buick", "BYD", "Cadillac", "Caoa Chery", "CBT", "Chamonix", "Cheda", "Chevrolet",
+		"Chrysler", "Citroën", "Daewoo", "Daihatsu", "De Soto", "DKW-Vemag", "Dodge", "Edsel",
+		"Effa", "Emis", "Engesa", "Envemo", "Farus", "Fercar Buggy", "Ferrari", "Fiat", "Ford",
+		"Fyber", "Geely", "GMC", "Gurgel", "GWM", "Hafei", "Honda", "Hudson", "Hummer", "Hyundai",
+		"Infiniti", "IVECO", "JAC", "Jaguar", "Jeep", "Jinbei", "Kia", "Lada", "Lamborghini",
+		"Land Rover", "Lexus", "Lifan", "Lincoln", "Lotus", "Mahindra", "Marcopolo", "Maserati",
+		"Mazda", "Mclaren", "Menon", "Mercedes-Benz", "Mercury", "MG", "Mini", "Mitsubishi", "Miura",
+		"Mobby", "Morris", "MP Lafer", "Neta", "Nissan", "Opel", "PAG", "Peugeot", "Plymouth",
+		"Pontiac", "Porsche", "Puma", "RAM", "Renault", "Rivian", "Rolls-Royce", "Saturn", "Seat",
+		"Seres", "Shrlby", "Smart", "Ssangyong", "Studebaker", "Subaru", "Sunbeam", "Suzuki", "TAC",
+		"Tesla", "Toyota", "Triumph", "Troller", "Volkswagen", "Volvo", "Wake", "Willys", "Willys Overland",
+	}
+
 	dgBrands = []string{
-		"Alfa Romeo", "Audi", "Bentley", "BMW", "Bugatti", "Chevrolet", "Citroën", "Dodge", "Ferrari", "Ford", "Honda", "Jaguar", 
-		"Kia", "Lamborghini", "Land Rover", "Lexus", "Maserati", "Mclaren", "Mercedes-Benz", "Mini", "Mitsubishi", "Nissan", 
-		"Porsche", "RAM", "Subaru", "Toyota", "Volkswagen", "Volvo", 
-	}
-
-	allBrands = []string{
-		"Alfa Romeo", "Americar", "Audi", "Bentley", "BMW", "Bugatti", "Bugway", "BYD", "Caoa Chery", "Chamonix", "Chevrolet", 
-		"Chrysler", "Citroën", "Daihatsu", "Dodge", "Effa", "Engesa", "Ferrari", "Fiat", "Ford", "GMC", "GWM", "Honda", 
-		"Hyundai", "Infiniti", "IVECO", "JAC", "Jaguar", "Jeep", "Kia", "Lamborghini", "Land Rover", "Lexus", "Lifan", 
-		"Maserati", "Mclaren", "Mercedes-Benz", "Mini", "Mitsubishi", "Miura", "Mp Lafer", "Nissan", "Peugeot", "Plymouth", 
-		"Porsche", "RAM", "Renault", "Rivian", "Seat", "Smart", "Ssangyong", "Studebaker", "Subaru", "Suzuki", "Tesla", 
-		"Toyota", "Troller", "Volkswagen", "Volvo", "Willys", 
-	}
-
-	dgOmittedBrands = []string{
-		"Americar", "Bugway", "BYD", "Caoa Chery", "Chamonix", "Chrysler", "Daihatsu", "Effa", "Engesa", "Fiat", "GMC", 
-		"GWM", "Hyundai", "Infiniti", "IVECO", "JAC", "Jeep", "Lifan", "Miura", "MP Lafer", "Peugeot", "Plymouth", "Renault", 
-		"Rivian", "Seat", "Smart", "Ssangyong", "Studebaker", "Suzuki", "Tesla", "Troller", "Willys", 
+		"Alfa Romeo", "Aston Martin", "Audi", "BMW", "Bugatti", "Dodge", "Ferrari", "Jaguar", 
+		"Lamborghini", "Land Rover", "Lexus", "Maserati", "Mclaren", "Mercedes-Benz", "Mini",
+		"Porsche", "Rolls-Royce", "Volkswagen", 
 	}
 
 	models = []string{"Corolla", "Mustang", "X5", "C-Class"}
 )
 
+func listBrands(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(brands)
+}
+
 func listDgBrands(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dgBrands)
-}
-
-func listDgOmmitedBrands(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dgOmittedBrands)
-}
-
-func listAllBrands(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(allBrands)
 }
 
 func listModels(w http.ResponseWriter, r *http.Request) {
