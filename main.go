@@ -7,6 +7,8 @@ import (
 )
 
 func main() {
+	http.HandleFunc("/", status) //GET
+
 	//bannerdev
 	http.HandleFunc("/gen-banner", genBanner)         //POST
 	http.HandleFunc("/logos", getLogos)               //GET
