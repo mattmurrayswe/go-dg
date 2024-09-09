@@ -28,8 +28,20 @@ var (
 		"Porsche", "Rolls-Royce", "Volkswagen", 
 	}
 
-	models = []string{"Corolla", "Mustang", "X5", "C-Class"}
+	brandsWithModels = map[string][]string{
+		"Alfa Romeo": {"Giulia", "Stelvio", "Giulietta", "Stelvio Quadrifoglio", ""},
+		"Aston Martin": {},
+		"Audi": {},
+		"BMW": {},
+		"Bugatti": {},
+	}
 )
+
+func status(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{"message": "Application running on Kubernetes"}
+	json.NewEncoder(w).Encode(response)
+}
 
 func listBrands(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -43,5 +55,14 @@ func listDgBrands(w http.ResponseWriter, r *http.Request) {
 
 func listModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(models)
+	brand := r.URL.Query().Get("brand")
+	if brand != "" {
+		if models, ok := brandsWithModels[brand]; ok {
+			json.NewEncoder(w).Encode(models)
+		} else {
+			http.Error(w, "Brand not found", http.StatusNotFound)
+		}
+	} else {
+		http.Error(w, "Brand query parameter is missing", http.StatusBadRequest)
+	}
 }
