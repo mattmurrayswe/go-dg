@@ -1,15 +1,15 @@
 package main
 
 import (
-	"database/sql"
+	"dg/db"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
-	"golang.org/x/crypto/bcrypt"
-	_ "github.com/lib/pq"  // Import PostgreSQL driver
 	"github.com/golang-jwt/jwt/v5"
+	_ "github.com/lib/pq" // Import PostgreSQL driver
+	"golang.org/x/crypto/bcrypt"
 )
 
 var jwtKey = []byte("your_secret_key")
@@ -17,6 +17,10 @@ var jwtKey = []byte("your_secret_key")
 type Claims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
+}
+
+func init() {
+    db.InitializeDB() // Initialize the database connection
 }
 
 func main() {
@@ -88,7 +92,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
     if username == "" || password == "" {
         http.Error(w, "Missing username or password", http.StatusBadRequest)
         return
-    }
+    } 
 
     // Hash the password before storing it
     hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -97,21 +101,12 @@ func createUser(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // Connection string for PostgreSQL
-    connStr := "postgres://admin_dg:AmazingDGPass@123@192.168.49.2:30000/dg_go?sslmode=disable"
-    db, err := sql.Open("postgres", connStr)
-    if err != nil {
-        http.Error(w, "Database connection error", http.StatusInternalServerError)
-        log.Println("Error connecting to the database:", err)
-        return
-    }
-    defer db.Close()
-
-    // Insert the new user into the database (use $1, $2 for parameterized queries in PostgreSQL)
-    _, err = db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", username, string(hashedPassword))
+    // Use the DB variable from the db package
+	fmt.Println("1")
+    _, err = db.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", username, string(hashedPassword))
     if err != nil {
         http.Error(w, "Could not create user", http.StatusInternalServerError)
-        log.Println("Database error:", err) // Log error for further investigation
+        log.Println("Database error:", err)
         return
     }
 
@@ -120,65 +115,56 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
-    var username, password string
-    username = r.FormValue("username")
-    password = r.FormValue("password")
+	var username, password string
+	username = r.FormValue("username")
+	password = r.FormValue("password")
 
-    // Validate input
-    if username == "" || password == "" {
-        http.Error(w, "Missing username or password", http.StatusBadRequest)
-        return
-    }
+	// Validate input
+	if username == "" || password == "" {
+		http.Error(w, "Missing username or password", http.StatusBadRequest)
+		return
+	}
 
-    // Connect to the PostgreSQL database
-    connStr := "postgres://admin_dg:AmazingDGPass@123@192.168.49.2:30000/dg_go?sslmode=disable"
-    db, err := sql.Open("postgres", connStr)
-    if err != nil {
-        http.Error(w, "Database connection error", http.StatusInternalServerError)
-        log.Println("Error connecting to the database:", err)
-        return
-    }
-    defer db.Close()
+	// Query the database for the user's hashed password using db.DB from your package
+	var hashedPassword string
+	err := db.DB.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Database query error", http.StatusInternalServerError)
+		log.Println("Error querying the database:", err)
+		return
+	}
 
-    // Query the database for the user's hashed password
-    var hashedPassword string
-    err = db.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
-    if err == sql.ErrNoRows {
-        http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-        return
-    } else if err != nil {
-        http.Error(w, "Database query error", http.StatusInternalServerError)
-        log.Println("Error querying the database:", err)
-        return
-    }
+	// Compare the hashed password with the provided password
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		// Password does not match
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
 
-    // Compare the hashed password with the provided password
-    err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-    if err != nil {
-        // Password does not match
-        http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-        return
-    }
+	// Create the JWT claims, which include the username and expiry time
+	expirationTime := time.Now().Add(15 * time.Minute)
+	claims := &Claims{
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
 
-    // Create the JWT claims, which include the username and expiry time
-    expirationTime := time.Now().Add(15 * time.Minute)
-    claims := &Claims{
-        Username: username,
-        RegisteredClaims: jwt.RegisteredClaims{
-            ExpiresAt: jwt.NewNumericDate(expirationTime),
-        },
-    }
+	// Create the token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		http.Error(w, "Could not create token", http.StatusInternalServerError)
+		return
+	}
 
-    // Create the token with claims
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    tokenString, err := token.SignedString(jwtKey)
-    if err != nil {
-        http.Error(w, "Could not create token", http.StatusInternalServerError)
-        return
-    }
-
-    // Return the token in the response
-    json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+	// Return the token in the response
+	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }
 
 func refresh(w http.ResponseWriter, r *http.Request) {
