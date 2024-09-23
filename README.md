@@ -5,3 +5,4 @@ minikube service postgres --url
 skaffold dev
 kubectl get pods
 kubectl get services
+kubectl apply -f postgres-deployment.yaml

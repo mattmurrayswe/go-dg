@@ -1,12 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
 	"time"
+	"golang.org/x/crypto/bcrypt"
+	_ "github.com/lib/pq"  // Import PostgreSQL driver
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtKey = []byte("your_secret_key")
@@ -20,6 +23,7 @@ func main() {
 	http.HandleFunc("/", status) //GET
 
 	http.HandleFunc("/login", login)
+	http.HandleFunc("/user", createUser)
 	http.HandleFunc("/refresh", refresh) // New route for refreshing tokens
 	http.HandleFunc("/protected", authenticate(protectedEndpoint))
 
@@ -75,36 +79,106 @@ func authenticate(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func createUser(w http.ResponseWriter, r *http.Request) {
+    var username, password string
+    username = r.FormValue("username")
+    password = r.FormValue("password")
+
+    // Validate input
+    if username == "" || password == "" {
+        http.Error(w, "Missing username or password", http.StatusBadRequest)
+        return
+    }
+
+    // Hash the password before storing it
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    if err != nil {
+        http.Error(w, "Error hashing password", http.StatusInternalServerError)
+        return
+    }
+
+    // Connection string for PostgreSQL
+    connStr := "postgres://admin_dg:AmazingDGPass@123@192.168.49.2:30000/dg_go?sslmode=disable"
+    db, err := sql.Open("postgres", connStr)
+    if err != nil {
+        http.Error(w, "Database connection error", http.StatusInternalServerError)
+        log.Println("Error connecting to the database:", err)
+        return
+    }
+    defer db.Close()
+
+    // Insert the new user into the database (use $1, $2 for parameterized queries in PostgreSQL)
+    _, err = db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", username, string(hashedPassword))
+    if err != nil {
+        http.Error(w, "Could not create user", http.StatusInternalServerError)
+        log.Println("Database error:", err) // Log error for further investigation
+        return
+    }
+
+    // Respond with a success message
+    json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
+}
+
 func login(w http.ResponseWriter, r *http.Request) {
-	var username, password string
-	username = r.FormValue("username")
-	password = r.FormValue("password")
+    var username, password string
+    username = r.FormValue("username")
+    password = r.FormValue("password")
 
-	// Validate credentials (simplified)
-	if username != "admin" || password != "password" {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-		return
-	}
+    // Validate input
+    if username == "" || password == "" {
+        http.Error(w, "Missing username or password", http.StatusBadRequest)
+        return
+    }
 
-	// Create the JWT claims, which includes the username and expiry time
-	expirationTime := time.Now().Add(15 * time.Minute)
-	claims := &Claims{
-		Username: username,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
-	}
+    // Connect to the PostgreSQL database
+    connStr := "postgres://admin_dg:AmazingDGPass@123@192.168.49.2:30000/dg_go?sslmode=disable"
+    db, err := sql.Open("postgres", connStr)
+    if err != nil {
+        http.Error(w, "Database connection error", http.StatusInternalServerError)
+        log.Println("Error connecting to the database:", err)
+        return
+    }
+    defer db.Close()
 
-	// Create the token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		http.Error(w, "Could not create token", http.StatusInternalServerError)
-		return
-	}
+    // Query the database for the user's hashed password
+    var hashedPassword string
+    err = db.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
+    if err == sql.ErrNoRows {
+        http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+        return
+    } else if err != nil {
+        http.Error(w, "Database query error", http.StatusInternalServerError)
+        log.Println("Error querying the database:", err)
+        return
+    }
 
-	// Return the token in the response
-	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+    // Compare the hashed password with the provided password
+    err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+    if err != nil {
+        // Password does not match
+        http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+        return
+    }
+
+    // Create the JWT claims, which include the username and expiry time
+    expirationTime := time.Now().Add(15 * time.Minute)
+    claims := &Claims{
+        Username: username,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(expirationTime),
+        },
+    }
+
+    // Create the token with claims
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    tokenString, err := token.SignedString(jwtKey)
+    if err != nil {
+        http.Error(w, "Could not create token", http.StatusInternalServerError)
+        return
+    }
+
+    // Return the token in the response
+    json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }
 
 func refresh(w http.ResponseWriter, r *http.Request) {

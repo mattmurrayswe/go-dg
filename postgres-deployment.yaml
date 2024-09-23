@@ -19,8 +19,8 @@ spec:
         - containerPort: 5432
         env:
         - name: POSTGRES_USER
-          value: "myuser"
+          value: "admin_dg"
         - name: POSTGRES_PASSWORD
-          value: "mypassword"
+          value: "AmazingDGPass@123"
         - name: POSTGRES_DB
-          value: "mydatabase"
+          value: "dg_go"
