@@ -1,4 +1,4 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
@@ -37,23 +37,23 @@ var (
 	}
 )
 
-func status(w http.ResponseWriter, r *http.Request) {
+func Status(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{"message": "Application running on Kubernetes"}
 	json.NewEncoder(w).Encode(response)
 }
 
-func listBrands(w http.ResponseWriter, r *http.Request) {
+func ListBrands(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(brands)
 }
 
-func listDgBrands(w http.ResponseWriter, r *http.Request) {
+func ListDgBrands(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dgBrands)
 }
 
-func listModels(w http.ResponseWriter, r *http.Request) {
+func ListModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	brand := r.URL.Query().Get("brand")
 	if brand != "" {

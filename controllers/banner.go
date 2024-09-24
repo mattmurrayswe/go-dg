@@ -1,5 +1,5 @@
 // banner.go
-package main
+package controllers
 
 import (
 	"encoding/json"
@@ -20,7 +20,7 @@ type Technologies struct {
 	Tech5 string `json:"tech5"`
 }
 
-func genBanner(w http.ResponseWriter, r *http.Request) {
+func GenBanner(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -103,7 +103,7 @@ var availableTechs = []Tech{
 	{"AWS", "/images/aws.png"},
 }
 
-func getLogos(w http.ResponseWriter, r *http.Request) {
+func GetLogos(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	host := r.Host
@@ -119,7 +119,7 @@ func getLogos(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(techsWithFullURLs)
 }
 
-func listTechOptions(w http.ResponseWriter, r *http.Request) {
+func ListTechOptions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	techNames := make([]string, len(availableTechs))
