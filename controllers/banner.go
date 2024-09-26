@@ -2,11 +2,13 @@
 package controllers
 
 import (
+	"dg/db"
 	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
+	"log"
 	"net/http"
 
 	"github.com/fogleman/gg"
@@ -122,10 +124,34 @@ func GetLogos(w http.ResponseWriter, r *http.Request) {
 func ListTechOptions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	techNames := make([]string, len(availableTechs))
-	for i, tech := range availableTechs {
-		techNames[i] = tech.Name
+	rows, err := db.DB.Query("SELECT tech_name FROM tech_options")
+	if err != nil {
+		http.Error(w, "Unable to fetch tech options", http.StatusInternalServerError)
+		log.Println("Error fetching tech options:", err)
+		return
+	}
+	defer rows.Close()
+
+	var techNames []string
+
+	for rows.Next() {
+		var techName string
+		if err := rows.Scan(&techName); err != nil {
+			http.Error(w, "Error scanning tech options", http.StatusInternalServerError)
+			log.Println("Error scanning tech options:", err)
+			return
+		}
+		techNames = append(techNames, techName)
 	}
 
-	json.NewEncoder(w).Encode(techNames)
+	if err = rows.Err(); err != nil {
+		http.Error(w, "Error iterating over tech options", http.StatusInternalServerError)
+		log.Println("Error iterating over tech options:", err)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(techNames); err != nil {
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		log.Println("Error encoding response:", err)
+	}
 }

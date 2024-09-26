@@ -32,6 +32,6 @@ func main() {
 	http.HandleFunc("/brands/dg", middlewares.Authenticate(controllers.ListDgBrands))
 	http.HandleFunc("/models", middlewares.Authenticate(controllers.ListModels))
 
-	fmt.Println("Server listening on http://localhost:8080")
+	fmt.Println("Server running")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
