@@ -19,66 +19,78 @@ type Claims struct {
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
-	var username, password string
-	username = r.FormValue("username")
-	password = r.FormValue("password")
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
 
-	if username == "" || password == "" {
-		http.Error(w, "Missing username or password", http.StatusBadRequest)
-		return
-	}
+    var username, password string
+    username = r.FormValue("username")
+    password = r.FormValue("password")
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		http.Error(w, "Error hashing password", http.StatusInternalServerError)
-		return
-	}
+    if username == "" || password == "" {
+        http.Error(w, "Missing username or password", http.StatusBadRequest)
+        return
+    }
 
-	_, err = db.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", username, string(hashedPassword))
-	if err != nil {
-		http.Error(w, "Could not create user", http.StatusInternalServerError)
-		log.Println("Database error:", err)
-		return
-	}
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    if err != nil {
+        http.Error(w, "Error hashing password", http.StatusInternalServerError)
+        return
+    }
 
-	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
+    _, err = db.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", username, string(hashedPassword))
+    if err != nil {
+        http.Error(w, "Could not create user", http.StatusInternalServerError)
+        log.Println("Database error:", err)
+        return
+    }
+
+    json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
 }
+
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	var username, password string
-	username = r.FormValue("username")
-	password = r.FormValue("password")
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
 
-	var hashedPassword string
-	err := db.DB.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
-	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-		return
-	}
+    var username, password string
+    username = r.FormValue("username")
+    password = r.FormValue("password")
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-		return
-	}
+    var hashedPassword string
+    err := db.DB.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
+    if err != nil {
+        http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+        return
+    }
 
-	expirationTime := time.Now().Add(15 * time.Minute)
-	claims := &Claims{
-		Username: username,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
-	}
+    err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+    if err != nil {
+        http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+        return
+    }
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
-	if err != nil {
-		http.Error(w, "Could not create token", http.StatusInternalServerError)
-		return
-	}
+    expirationTime := time.Now().Add(15 * time.Minute)
+    claims := &Claims{
+        Username: username,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(expirationTime),
+        },
+    }
 
-	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    tokenString, err := token.SignedString(jwtKey)
+    if err != nil {
+        http.Error(w, "Could not create token", http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }
+
 
 func Refresh(w http.ResponseWriter, r *http.Request) {
 	tokenString := r.Header.Get("Authorization")
