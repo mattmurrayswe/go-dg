@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"dg/db"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -23,17 +25,17 @@ var (
 	}
 
 	dgBrands = []string{
-		"Alfa Romeo", "Aston Martin", "Audi", "BMW", "Bugatti", "Dodge", "Ferrari", "Jaguar", 
+		"Alfa Romeo", "Aston Martin", "Audi", "BMW", "Bugatti", "Dodge", "Ferrari", "Jaguar",
 		"Lamborghini", "Land Rover", "Lexus", "Maserati", "Mclaren", "Mercedes-Benz", "Mini",
-		"Porsche", "Rolls-Royce", "Volkswagen", 
+		"Porsche", "Rolls-Royce", "Volkswagen",
 	}
 
 	brandsWithModels = map[string][]string{
-		"Alfa Romeo": {"Giulia", "Stelvio", "Giulietta", "Stelvio Quadrifoglio", ""},
+		"Alfa Romeo":   {"Giulia", "Stelvio", "Giulietta", "Stelvio Quadrifoglio", ""},
 		"Aston Martin": {},
-		"Audi": {},
-		"BMW": {},
-		"Bugatti": {},
+		"Audi":         {},
+		"BMW":          {},
+		"Bugatti":      {},
 	}
 )
 
@@ -55,6 +57,43 @@ func ListDgBrands(w http.ResponseWriter, r *http.Request) {
 
 func ListModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	rows, err := db.DB.Query("SELECT model_name FROM models")
+	if err != nil {
+		http.Error(w, "Unable to fetch models", http.StatusInternalServerError)
+		log.Printf("Error fetching models: %v", err)
+		return
+	}
+	defer rows.Close()
+
+	var modelNames []string
+
+	for rows.Next() {
+		var modelName string
+		if err := rows.Scan(&modelName); err != nil {
+			http.Error(w, "Error scanning models", http.StatusInternalServerError)
+			log.Printf("Error scanning models: %v", err)
+			return
+		}
+		modelNames = append(modelNames, modelName)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error fetching data from database", http.StatusInternalServerError)
+		log.Printf("Error after row iteration: %v", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(modelNames); err != nil {
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		log.Printf("Error encoding JSON response: %v", err)
+	}
+}
+
+
+func ListModels1(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	brand := r.URL.Query().Get("brand")
 	if brand != "" {
 		if models, ok := brandsWithModels[brand]; ok {
@@ -65,4 +104,52 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "Brand query parameter is missing", http.StatusBadRequest)
 	}
+}
+
+func CreateProject(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Check that the request method is POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Define a struct to parse the incoming JSON request
+	type Project struct {
+		OwnerID     *int    `json:"owner_id"`
+		Brand       *string `json:"brand"`
+		Model       *string `json:"model"`
+		Year        *int    `json:"year"`
+		CardPrice   *int    `json:"card_price"`
+		ProjectName *string `json:"project_name"`
+		Photo       *string `json:"photo"`
+		HorsePowers *int    `json:"horse_powers"`
+		DGP         *int    `json:"dgp"`
+		Rarity      *string `json:"rarity"`
+	}
+
+	var project Project
+
+	// Decode the JSON body into the Project struct
+	err := json.NewDecoder(r.Body).Decode(&project)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Insert the project into the database using exec
+	sqlStatement := `INSERT INTO projects (owner_id, brand, model, year, card_price, project_name, photo, horse_powers, dgp, rarity)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+
+	_, err = db.DB.Exec(sqlStatement, project.OwnerID, project.Brand, project.Model, project.Year, project.CardPrice,
+		project.ProjectName, project.Photo, project.HorsePowers, project.DGP, project.Rarity)
+	if err != nil {
+		http.Error(w, "Failed to create project", http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with a success message
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Project created successfully"})
 }
