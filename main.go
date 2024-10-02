@@ -5,32 +5,33 @@ import (
 	"dg/db"
 	"dg/middlewares"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
-	_ "github.com/lib/pq"
 )
 
 func init() {
-    db.InitializeDB()
+	db.InitializeDB()
 }
 
 func main() {
 	http.HandleFunc("/", controllers.Status)
 
 	// Auth routes
-	http.HandleFunc("/login", controllers.Login)
-	http.HandleFunc("/refresh", controllers.Refresh)
-	http.HandleFunc("/user", controllers.CreateUser)
+	http.HandleFunc("/login", controllers.Login)     //ṔOST
+	http.HandleFunc("/refresh", controllers.Refresh) //GET
+	http.HandleFunc("/user", controllers.CreateUser) //POST
 
 	// Banner routes
-	http.HandleFunc("/gen-banner", middlewares.Authenticate(controllers.GenBanner))
-	http.HandleFunc("/logos", middlewares.Authenticate(controllers.GetLogos))
-	http.HandleFunc("/tech-options", middlewares.Authenticate(controllers.ListTechOptions))
+	http.HandleFunc("/gen-banner", middlewares.Authenticate(controllers.GenBanner))         //POST
+	http.HandleFunc("/logos", middlewares.Authenticate(controllers.GetLogos))               //GET
+	http.HandleFunc("/tech-options", middlewares.Authenticate(controllers.ListTechOptions)) //GET
 
 	// Car brands and models routes
-	http.HandleFunc("/brands/", middlewares.Authenticate(controllers.ListBrands))
-	http.HandleFunc("/brands/dg", middlewares.Authenticate(controllers.ListDgBrands))
-	http.HandleFunc("/models", middlewares.Authenticate(controllers.ListModels))
+	http.HandleFunc("/brands/", middlewares.Authenticate(controllers.ListBrands))     //GET
+	http.HandleFunc("/brands/dg", middlewares.Authenticate(controllers.ListDgBrands)) //GET
+	http.HandleFunc("/models", middlewares.Authenticate(controllers.ListModels))      //GET
+	http.HandleFunc("/project", middlewares.Authenticate(controllers.CreateProject))     //POST
 
 	fmt.Println("Server running")
 	log.Fatal(http.ListenAndServe(":8080", nil))
