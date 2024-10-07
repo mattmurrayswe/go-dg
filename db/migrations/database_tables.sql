@@ -36,6 +36,28 @@ CREATE TABLE dg_brands (
 
 CREATE TABLE models (
     id SERIAL PRIMARY KEY,
-    model_name VARCHAR(255),
-    brand_name VARCHAR(255)
+    brand_name VARCHAR(255),
+    model_name VARCHAR(255)
 );
+
+-- CREATE TABLE models (
+--     id SERIAL PRIMARY KEY,
+--     brand_name VARCHAR(255),
+--     model_name VARCHAR(255),
+--     UNIQUE(brand_name, model_name)
+-- );
+
+ALTER table dg_brands 
+ADD COLUMN site VARCHAR(255);
+
+ALTER table brands 
+ADD COLUMN site VARCHAR(255);
+
+ALTER table brands 
+ADD COLUMN logo_url VARCHAR(255);
+
+ALTER TABLE models
+ADD CONSTRAINT unique_brand_model UNIQUE (brand_name, model_name);
+
+-- SELECT setval('models_id_seq', 1, false);
+

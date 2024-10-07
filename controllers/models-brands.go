@@ -58,7 +58,7 @@ func ListDgBrands(w http.ResponseWriter, r *http.Request) {
 func ListModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	rows, err := db.DB.Query("SELECT model_name FROM models")
+	rows, err := db.DB.Query("SELECT model_name, brand_name FROM models")
 	if err != nil {
 		http.Error(w, "Unable to fetch models", http.StatusInternalServerError)
 		log.Printf("Error fetching models: %v", err)
@@ -66,16 +66,22 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var modelNames []string
+	type BrandModels struct {
+		Brand  string   `json:"brand"`
+		Models []string `json:"models"`
+	}
+
+	// Use a map to group models by brand
+	brandModelsMap := make(map[string][]string)
 
 	for rows.Next() {
-		var modelName string
-		if err := rows.Scan(&modelName); err != nil {
+		var modelName, brandName string
+		if err := rows.Scan(&modelName, &brandName); err != nil {
 			http.Error(w, "Error scanning models", http.StatusInternalServerError)
 			log.Printf("Error scanning models: %v", err)
 			return
 		}
-		modelNames = append(modelNames, modelName)
+		brandModelsMap[brandName] = append(brandModelsMap[brandName], modelName)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -84,8 +90,14 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Convert map to slice of BrandModels
+	var result []BrandModels
+	for brand, models := range brandModelsMap {
+		result = append(result, BrandModels{Brand: brand, Models: models})
+	}
+
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(modelNames); err != nil {
+	if err := json.NewEncoder(w).Encode(result); err != nil {
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		log.Printf("Error encoding JSON response: %v", err)
 	}
@@ -109,13 +121,11 @@ func ListModels1(w http.ResponseWriter, r *http.Request) {
 func CreateProject(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Check that the request method is POST
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Define a struct to parse the incoming JSON request
 	type Project struct {
 		OwnerID     *int    `json:"owner_id"`
 		Brand       *string `json:"brand"`
@@ -131,14 +141,12 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 
 	var project Project
 
-	// Decode the JSON body into the Project struct
 	err := json.NewDecoder(r.Body).Decode(&project)
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Insert the project into the database using exec
 	sqlStatement := `INSERT INTO projects (owner_id, brand, model, year, card_price, project_name, photo, horse_powers, dgp, rarity)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 

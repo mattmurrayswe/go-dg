@@ -49,7 +49,68 @@ VALUES
 
 INSERT INTO models (brand_name, model_name)
 VALUES
-('Alfa Romeo', 'Giulia'),
+('Alfa Romeo', 'Tonale'),
 ('Alfa Romeo', 'Stelvio'),
-('Alfa Romeo', 'Giulietta'),
-('Alfa Romeo', 'Stelvio Quadrifoglio');
+('Alfa Romeo', 'Giulia'),
+('Alfa Romeo', 'Stradale');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Aston Martin', 'Vantage'),
+('Aston Martin', 'DB12'),
+('Aston Martin', 'Vanquish'),
+('Aston Martin', 'DBX'),
+('Aston Martin', 'Valhalla'),
+('Aston Martin', 'Valkyrie'),
+('Aston Martin', 'Valour'),
+('Aston Martin', 'Valiant');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Audi', 'A1'),
+('Audi', 'A3'),
+('Audi', 'A4'),
+('Audi', 'A5'),
+('Audi', 'A6'),
+('Audi', 'A7'),
+('Audi', 'A8'),
+('Audi', 'Q2'),
+('Audi', 'Q3'),
+('Audi', 'Q4 e-etron'),
+('Audi', 'Q5'),
+('Audi', 'Q7'),
+('Audi', 'Q8'),
+('Audi', 'R8'),
+('Audi', 'TT'),
+('Audi', 'e-tron GT');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('BMW', '530e M Sport'),
+('BMW', 'Concept XM'),
+('BMW', 'i VISION DEE'),
+('BMW', 'i Vision Circular'),
+('BMW', 'i4'),
+('BMW', 'i5 M60'),
+('BMW', 'i7'),
+('BMW', 'iX'),
+('BMW', 'iX M60'),
+('BMW', 'iX1'),
+('BMW', 'iX2'),
+('BMW', 'iX3'),
+('BMW', 'iX5 Hydrogen'),
+('BMW', 'M2 Coupé'),
+('BMW', 'M3 Competition'),
+('BMW', 'M4 CS'),
+('BMW', 'Série 2 Gran Coupé'),
+('BMW', 'Série 3 Sedã'),
+('BMW', 'Série 4 Cabrio'),
+('BMW', 'Vision Neue Klasse'),
+('BMW', 'X1'),
+('BMW', 'X2'),
+('BMW', 'X3'),
+('BMW', 'X4'),
+('BMW', 'X5'),
+('BMW', 'X6'),
+('BMW', 'X6 M Competition'),
+('BMW', 'X7 M60i');
