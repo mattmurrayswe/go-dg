@@ -51,8 +51,11 @@ INSERT INTO models (brand_name, model_name)
 VALUES
 ('Alfa Romeo', 'Tonale'),
 ('Alfa Romeo', 'Stelvio'),
+('Alfa Romeo', 'Stelvio Quadrifoglio'),
 ('Alfa Romeo', 'Giulia'),
-('Alfa Romeo', 'Stradale');
+('Alfa Romeo', 'Giulia Quadrifoglio'),
+('Alfa Romeo', 'Junior Elettrica'),
+('Alfa Romeo', '33 Stradale');
 
 INSERT INTO models (brand_name, model_name)
 VALUES
@@ -114,3 +117,38 @@ VALUES
 ('BMW', 'X6'),
 ('BMW', 'X6 M Competition'),
 ('BMW', 'X7 M60i');
+
+INSERT INTO versions (brand_name, model_name, version_name)
+VALUES
+('Alfa Romeo', 'Tonale', 'Sprint'),
+('Alfa Romeo', 'Tonale', 'Veloce'),
+('Alfa Romeo', 'Tonale', 'Tributo Italiano'),
+('Alfa Romeo', 'Stelvio', 'Sprint'),
+('Alfa Romeo', 'Stelvio', 'Veloce'),
+('Alfa Romeo', 'Stelvio', 'Tributo Italiano'),
+('Alfa Romeo', 'Giulia', 'Sprint'),
+('Alfa Romeo', 'Giulia', 'Veloce'),
+('Alfa Romeo', 'Giulia', 'Tributo Italiano'),
+('Alfa Romeo', 'Stelvio Quadrifoglio', ''),
+('Alfa Romeo', 'Stelvio Quadrifoglio', 'Super Sport'),
+('Alfa Romeo', 'Giulia Quadrifoglio', ''),
+('Alfa Romeo', 'Giulia Quadrifoglio', 'Super Sport'),
+('Alfa Romeo', 'Junior Elettrica', ''),
+('Alfa Romeo', 'Junior Elettrica', 'Speciale'),
+('Alfa Romeo', 'Junior Elettrica', '280 Veloce'),
+('Alfa Romeo', '33 Stradale', '');
+
+INSERT INTO versions (brand_name, model_name, version_name)
+VALUES
+('Aston Martin', 'Vantage', 'Coupe'),
+('Aston Martin', 'DB12', ''),
+('Aston Martin', 'DB12', 'Volante'),
+('Aston Martin', 'Vanquish', ''),
+('Aston Martin', 'DBX', '707'),
+('Aston Martin', 'DBX', '707 AMR24 Edition'),
+('Aston Martin', 'Valhalla', ''),
+('Aston Martin', 'Valkyrie', 'Coupe'),
+('Aston Martin', 'Valkyrie', 'Spider'),
+('Aston Martin', 'Valkyrie', 'AMR Pro'),
+('Aston Martin', 'Valour', ''),
+('Aston Martin', 'Valiant', '');

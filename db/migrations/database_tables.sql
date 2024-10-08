@@ -27,11 +27,15 @@ CREATE TABLE projects (
 CREATE TABLE brands (
     id SERIAL PRIMARY KEY,
     brand_name VARCHAR(255),
+    site VARCHAR(255),
+    logo_url VARCHAR(255)
 );
 
 CREATE TABLE dg_brands (
     id SERIAL PRIMARY KEY,
     brand_name VARCHAR(255),
+    site VARCHAR(255),
+    logo_url VARCHAR(255)
 );
 
 CREATE TABLE models (
@@ -50,6 +54,9 @@ CREATE TABLE models (
 ALTER table dg_brands 
 ADD COLUMN site VARCHAR(255);
 
+ALTER table dg_brands 
+ADD COLUMN logo_url VARCHAR(255);
+
 ALTER table brands 
 ADD COLUMN site VARCHAR(255);
 
@@ -59,8 +66,22 @@ ADD COLUMN logo_url VARCHAR(255);
 ALTER TABLE models
 ADD CONSTRAINT unique_brand_model UNIQUE (brand_name, model_name);
 
+ALTER TABLE brands
+ADD CONSTRAINT unique_brand UNIQUE (brand_name);
+
+ALTER TABLE dg_brands
+ADD CONSTRAINT unique_dg_brand UNIQUE (brand_name);
+
 -- SELECT setval('models_id_seq', 1, false);
 
 SELECT models.model_name, models.brand_name, dg_brands.site
 FROM models
 INNER JOIN dg_brands ON models.brand_name = dg_brands.brand_name;
+
+CREATE TABLE versions (
+    id SERIAL PRIMARY KEY,
+    brand_name VARCHAR(255),
+    model_name VARCHAR(255),
+    version_name VARCHAR(255),
+    UNIQUE(brand_name, model_name, version_name)
+);
