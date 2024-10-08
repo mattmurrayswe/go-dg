@@ -58,7 +58,11 @@ func ListDgBrands(w http.ResponseWriter, r *http.Request) {
 func ListModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	rows, err := db.DB.Query("SELECT model_name, brand_name FROM models")
+	rows, err := db.DB.Query(`
+		SELECT models.model_name, models.brand_name, dg_brands.site 
+		FROM models
+		INNER JOIN dg_brands ON models.brand_name = dg_brands.brand_name
+	`)
 	if err != nil {
 		http.Error(w, "Unable to fetch models", http.StatusInternalServerError)
 		log.Printf("Error fetching models: %v", err)
@@ -67,21 +71,34 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type BrandModels struct {
-		Brand  string   `json:"brand"`
-		Models []string `json:"models"`
+		Brand      string   `json:"brand"`
+		SourceSite string   `json:"site"`
+		Models     []string `json:"models"`
 	}
 
-	// Use a map to group models by brand
-	brandModelsMap := make(map[string][]string)
+	// Use a map to group models by brand and store the source site
+	brandModelsMap := make(map[string]BrandModels)
 
 	for rows.Next() {
-		var modelName, brandName string
-		if err := rows.Scan(&modelName, &brandName); err != nil {
+		var modelName, brandName, sourceSite string
+		if err := rows.Scan(&modelName, &brandName, &sourceSite); err != nil {
 			http.Error(w, "Error scanning models", http.StatusInternalServerError)
 			log.Printf("Error scanning models: %v", err)
 			return
 		}
-		brandModelsMap[brandName] = append(brandModelsMap[brandName], modelName)
+
+		// Check if the brand already exists in the map
+		if brandModel, exists := brandModelsMap[brandName]; exists {
+			brandModel.Models = append(brandModel.Models, modelName)
+			brandModelsMap[brandName] = brandModel
+		} else {
+			// Create a new BrandModels entry for this brand
+			brandModelsMap[brandName] = BrandModels{
+				Brand:      brandName,
+				SourceSite: sourceSite,
+				Models:     []string{modelName},
+			}
+		}
 	}
 
 	if err := rows.Err(); err != nil {
@@ -92,8 +109,8 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 
 	// Convert map to slice of BrandModels
 	var result []BrandModels
-	for brand, models := range brandModelsMap {
-		result = append(result, BrandModels{Brand: brand, Models: models})
+	for _, brandModel := range brandModelsMap {
+		result = append(result, brandModel)
 	}
 
 	w.WriteHeader(http.StatusOK)

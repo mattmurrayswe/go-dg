@@ -61,3 +61,6 @@ ADD CONSTRAINT unique_brand_model UNIQUE (brand_name, model_name);
 
 -- SELECT setval('models_id_seq', 1, false);
 
+SELECT models.model_name, models.brand_name, dg_brands.site
+FROM models
+INNER JOIN dg_brands ON models.brand_name = dg_brands.brand_name;
