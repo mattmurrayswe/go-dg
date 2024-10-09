@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"dg/db"
 	"encoding/json"
 	"log"
@@ -59,7 +60,7 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	rows, err := db.DB.Query(`
-		SELECT models.model_name, models.brand_name, dg_brands.site 
+		SELECT models.model_name, models.brand_name, dg_brands.site, dg_brands.logo_url 
 		FROM models
 		INNER JOIN dg_brands ON models.brand_name = dg_brands.brand_name
 	`)
@@ -71,20 +72,29 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type BrandModels struct {
-		Brand      string   `json:"brand"`
-		SourceSite string   `json:"site"`
-		Models     []string `json:"models"`
+		Brand  string   `json:"brand"`
+		Site   string   `json:"site"`
+		Logo   string   `json:"logo"`
+		Models []string `json:"models"`
 	}
 
 	// Use a map to group models by brand and store the source site
 	brandModelsMap := make(map[string]BrandModels)
 
 	for rows.Next() {
-		var modelName, brandName, sourceSite string
-		if err := rows.Scan(&modelName, &brandName, &sourceSite); err != nil {
+		var modelName, brandName, site string
+		var logo sql.NullString
+
+		if err := rows.Scan(&modelName, &brandName, &site, &logo); err != nil {
 			http.Error(w, "Error scanning models", http.StatusInternalServerError)
 			log.Printf("Error scanning models: %v", err)
 			return
+		}
+
+		// Convert sql.NullString to string, use empty string if null
+		logoValue := ""
+		if logo.Valid {
+			logoValue = logo.String
 		}
 
 		// Check if the brand already exists in the map
@@ -94,9 +104,10 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// Create a new BrandModels entry for this brand
 			brandModelsMap[brandName] = BrandModels{
-				Brand:      brandName,
-				SourceSite: sourceSite,
-				Models:     []string{modelName},
+				Brand:  brandName,
+				Site:   site,
+				Logo:   logoValue,
+				Models: []string{modelName},
 			}
 		}
 	}
