@@ -31,6 +31,7 @@ func main() {
 	http.HandleFunc("/brands/", middlewares.Authenticate(controllers.ListBrands))     //GET
 	http.HandleFunc("/brands/dg", middlewares.Authenticate(controllers.ListDgBrands)) //GET
 	http.HandleFunc("/models", middlewares.Authenticate(controllers.ListModels))      //GET
+	http.HandleFunc("/versions", middlewares.Authenticate(controllers.ListModelsWithVersions))      //GET
 	http.HandleFunc("/project", middlewares.Authenticate(controllers.CreateProject))     //POST
 
 	fmt.Println("Server running")

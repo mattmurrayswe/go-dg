@@ -59,6 +59,7 @@ func ListDgBrands(w http.ResponseWriter, r *http.Request) {
 func ListModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	// Query models with their brand and site
 	rows, err := db.DB.Query(`
 		SELECT models.model_name, models.brand_name, dg_brands.site, dg_brands.logo_url 
 		FROM models
@@ -72,15 +73,106 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type BrandModels struct {
-		Brand  string   `json:"brand"`
-		Site   string   `json:"site"`
-		Logo   string   `json:"logo"`
-		Models []string `json:"models"`
+		Brand              string              `json:"brand"`
+		Logo               string              `json:"logo"`
+		Site               string              `json:"data_source_website"`
+		Models             []string            `json:"models"`
 	}
 
 	// Use a map to group models by brand and store the source site
 	brandModelsMap := make(map[string]BrandModels)
 
+	// Process rows of models
+	for rows.Next() {
+		var modelName, brandName, site string
+		var logo sql.NullString
+
+		if err := rows.Scan(&modelName, &brandName, &site, &logo); err != nil {
+			http.Error(w, "Error scanning models", http.StatusInternalServerError)
+			log.Printf("Error scanning models: %v", err)
+			return
+		}
+
+		// Convert sql.NullString to string, use empty string if null
+		logoValue := ""
+		if logo.Valid {
+			logoValue = logo.String
+		}
+
+		// Check if the brand already exists in the map
+		if brandModel, exists := brandModelsMap[brandName]; exists {
+			brandModel.Models = append(brandModel.Models, modelName)
+			brandModelsMap[brandName] = brandModel
+		} else {
+			// Create a new BrandModels entry for this brand
+			brandModelsMap[brandName] = BrandModels{
+				Brand:              brandName,
+				Site:               site,
+				Logo:               logoValue,
+				Models:             []string{modelName},
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error fetching data from database", http.StatusInternalServerError)
+		log.Printf("Error after row iteration: %v", err)
+		return
+	}
+
+	// Convert map to slice of BrandModels
+	var result []BrandModels
+	for _, brandModel := range brandModelsMap {
+		result = append(result, brandModel)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		log.Printf("Error encoding JSON response: %v", err)
+	}
+}
+
+func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Query models with their brand and site
+	rows, err := db.DB.Query(`
+		SELECT models.model_name, models.brand_name, dg_brands.site, dg_brands.logo_url 
+		FROM models
+		INNER JOIN dg_brands ON models.brand_name = dg_brands.brand_name
+	`)
+	if err != nil {
+		http.Error(w, "Unable to fetch models", http.StatusInternalServerError)
+		log.Printf("Error fetching models: %v", err)
+		return
+	}
+	defer rows.Close()
+
+	// Query versions associated with models
+	rowsVersions, err := db.DB.Query(`
+		SELECT versions.brand_name, versions.model_name, versions.version_name 
+		FROM versions
+	`)
+	if err != nil {
+		http.Error(w, "Unable to fetch versions", http.StatusInternalServerError)
+		log.Printf("Error fetching versions: %v", err)
+		return
+	}
+	defer rowsVersions.Close()
+
+	type BrandModels struct {
+		Brand             string               `json:"brand"`
+		Site              string               `json:"site"`
+		Logo              string               `json:"logo"`
+		Models            []string             `json:"models"`
+		ModelsWithVersions map[string][]string `json:"models_w_versions"` // Map model to versions
+	}
+
+	// Use a map to group models by brand and store the source site
+	brandModelsMap := make(map[string]BrandModels)
+
+	// Process rows of models
 	for rows.Next() {
 		var modelName, brandName, site string
 		var logo sql.NullString
@@ -108,8 +200,44 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 				Site:   site,
 				Logo:   logoValue,
 				Models: []string{modelName},
+				ModelsWithVersions: make(map[string][]string), // Initialize empty map for model versions
 			}
 		}
+	}
+
+	// Process rows of versions
+	for rowsVersions.Next() {
+		var versionName, modelName, brandName string
+
+		if err := rowsVersions.Scan(&brandName, &modelName, &versionName); err != nil {
+			http.Error(w, "Error scanning versions", http.StatusInternalServerError)
+			log.Printf("Error scanning versions: %v", err)
+			return
+		}
+
+		// Add version to the corresponding model in the brand
+		if brandModel, exists := brandModelsMap[brandName]; exists {
+			// Check if the model already exists in the ModelsWithVersions map
+			if versions, exists := brandModel.ModelsWithVersions[modelName]; exists {
+				// Add version to the list
+				brandModel.ModelsWithVersions[modelName] = append(versions, versionName)
+			} else {
+				// If no versions, add model with empty version or first version
+				brandModel.ModelsWithVersions[modelName] = []string{versionName}
+			}
+			// Update the brand model in the map
+			brandModelsMap[brandName] = brandModel
+		}
+	}
+
+	// Ensure all models have at least an empty string version if no version is present
+	for brandName, brandModel := range brandModelsMap {
+		for _, modelName := range brandModel.Models {
+			if _, exists := brandModel.ModelsWithVersions[modelName]; !exists {
+				brandModel.ModelsWithVersions[modelName] = []string{""} // Add an empty version if none exists
+			}
+		}
+		brandModelsMap[brandName] = brandModel
 	}
 
 	if err := rows.Err(); err != nil {
@@ -124,6 +252,7 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 		result = append(result, brandModel)
 	}
 
+	// Return the result as a JSON response
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(result); err != nil {
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
