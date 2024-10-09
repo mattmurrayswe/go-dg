@@ -162,11 +162,11 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 	defer rowsVersions.Close()
 
 	type BrandModels struct {
-		Brand             string               `json:"brand"`
-		Site              string               `json:"site"`
-		Logo              string               `json:"logo"`
-		Models            []string             `json:"models"`
-		ModelsWithVersions map[string][]string `json:"models_w_versions"` // Map model to versions
+		Brand  string   `json:"brand"`
+		Site   string   `json:"site"`
+		Logo   string   `json:"logo"`
+		Models []string `json:"models"` // List of concatenated model and version
+		ModelsWithVersions []string `json:"models_w_versions"` // List of concatenated model and version
 	}
 
 	// Use a map to group models by brand and store the source site
@@ -191,7 +191,6 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 
 		// Check if the brand already exists in the map
 		if brandModel, exists := brandModelsMap[brandName]; exists {
-			brandModel.Models = append(brandModel.Models, modelName)
 			brandModelsMap[brandName] = brandModel
 		} else {
 			// Create a new BrandModels entry for this brand
@@ -199,8 +198,8 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 				Brand:  brandName,
 				Site:   site,
 				Logo:   logoValue,
-				Models: []string{modelName},
-				ModelsWithVersions: make(map[string][]string), // Initialize empty map for model versions
+				Models: []string{}, // Initialize an empty slice for models with versions
+				ModelsWithVersions: []string{}, // Initialize an empty slice for models with versions
 			}
 		}
 	}
@@ -215,27 +214,24 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Add version to the corresponding model in the brand
+		// Create full model-version entry (e.g., "Stelvio Sprint")
+		fullModelName := modelName
+		if versionName != "" {
+			fullModelName = modelName + " " + versionName
+		}
+
+		// Add the full model name to the list
 		if brandModel, exists := brandModelsMap[brandName]; exists {
-			// Check if the model already exists in the ModelsWithVersions map
-			if versions, exists := brandModel.ModelsWithVersions[modelName]; exists {
-				// Add version to the list
-				brandModel.ModelsWithVersions[modelName] = append(versions, versionName)
-			} else {
-				// If no versions, add model with empty version or first version
-				brandModel.ModelsWithVersions[modelName] = []string{versionName}
-			}
-			// Update the brand model in the map
+			brandModel.ModelsWithVersions = append(brandModel.ModelsWithVersions, fullModelName)
 			brandModelsMap[brandName] = brandModel
 		}
 	}
 
-	// Ensure all models have at least an empty string version if no version is present
+	// Ensure all models have at least their base name if no version is present
 	for brandName, brandModel := range brandModelsMap {
-		for _, modelName := range brandModel.Models {
-			if _, exists := brandModel.ModelsWithVersions[modelName]; !exists {
-				brandModel.ModelsWithVersions[modelName] = []string{""} // Add an empty version if none exists
-			}
+		if len(brandModel.ModelsWithVersions) == 0 {
+			// If no versions exist for a model, just add the model name
+			brandModel.ModelsWithVersions = append(brandModel.ModelsWithVersions, brandName)
 		}
 		brandModelsMap[brandName] = brandModel
 	}
@@ -257,21 +253,6 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(result); err != nil {
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		log.Printf("Error encoding JSON response: %v", err)
-	}
-}
-
-
-func ListModels1(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	brand := r.URL.Query().Get("brand")
-	if brand != "" {
-		if models, ok := brandsWithModels[brand]; ok {
-			json.NewEncoder(w).Encode(models)
-		} else {
-			http.Error(w, "Brand not found", http.StatusNotFound)
-		}
-	} else {
-		http.Error(w, "Brand query parameter is missing", http.StatusBadRequest)
 	}
 }
 
