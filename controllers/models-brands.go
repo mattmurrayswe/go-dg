@@ -84,8 +84,8 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 
 	// Process rows of models
 	for rows.Next() {
-		var modelName, brandName, site string
-		var logo sql.NullString
+		var modelName, brandName string
+		var logo, site sql.NullString
 
 		if err := rows.Scan(&modelName, &brandName, &site, &logo); err != nil {
 			http.Error(w, "Error scanning models", http.StatusInternalServerError)
@@ -99,6 +99,12 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 			logoValue = logo.String
 		}
 
+		// Convert sql.NullString to string, use empty string if null
+		siteValue := ""
+		if site.Valid {
+			siteValue = site.String
+		}
+
 		// Check if the brand already exists in the map
 		if brandModel, exists := brandModelsMap[brandName]; exists {
 			brandModel.Models = append(brandModel.Models, modelName)
@@ -107,7 +113,7 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 			// Create a new BrandModels entry for this brand
 			brandModelsMap[brandName] = BrandModels{
 				Brand:              brandName,
-				Site:               site,
+				Site:               siteValue,
 				Logo:               logoValue,
 				Models:             []string{modelName},
 			}
