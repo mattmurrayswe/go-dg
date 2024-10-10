@@ -26,25 +26,25 @@ VALUES
 ('Subaru'),('Sunbeam'),('Suzuki'),('TAC'),('Tesla'),('Toyota'),('Triumph'),
 ('Troller'),('Volkswagen'),('Volvo'),('Wake'),('Willys'),('Willys Overland');
 
-INSERT INTO dg_brands (brand_name)
+INSERT INTO dg_brands (brand_name, site)
 VALUES
-('Alfa Romeo'),
-('Aston Martin'),
-('Audi'),
-('BMW'),
-('Bugatti'),
-('Dodge'),
-('Ferrari'),
-('Jaguar'),
-('Lamborghini'),
-('Land Rover'),
-('Lexus'),
-('Maserati'),
-('Mclaren'),
-('Mercedes-Benz'),
-('Mini'),
-('Porsche'),
-('Rolls-Royce'),
+('Alfa Romeo', 'https://www.alfaromeo.com/'),
+('Aston Martin', 'https://www.astonmartin.com/en/models'),
+('Audi', 'https://www.audi-mediacenter.com/en/models-4'),
+('BMW', 'https://www.bmw.com.br/pt/all-models.html'),
+('Bugatti', 'https://www.bugatti.com/the-bugatti-models/introduction/'),
+('Dodge', 'https://www.dodge.com/'),
+('Ferrari', 'https://www.dodge.com/'),
+('Jaguar', 'https://www.jaguarbrasil.com.br/index.html'),
+('Lamborghini', 'https://www.lamborghini.com/en-en/models'),
+('Land Rover', 'https://www.landrover.com.br/range-rover/index.html'),
+('Lexus', ''),
+('Maserati', ''),
+('Mclaren', ''),
+('Mercedes-Benz', ''),
+('Mini', ''),
+('Porsche', ''),
+('Rolls-Royce', ''),
 ('Volkswagen');
 
 INSERT INTO models (brand_name, model_name)
@@ -55,6 +55,7 @@ VALUES
 ('Alfa Romeo', 'Giulia'),
 ('Alfa Romeo', 'Giulia Quadrifoglio'),
 ('Alfa Romeo', 'Junior Elettrica'),
+('Alfa Romeo', 'Junior Ibrida'),
 ('Alfa Romeo', '33 Stradale');
 
 INSERT INTO models (brand_name, model_name)
@@ -144,9 +145,47 @@ VALUES
 ('Ferrari', 'Purosangue'),
 ('Ferrari', 'Roma'),
 ('Ferrari', 'Roma Spider'),
-('Ferrari', ''),
-('Ferrari', ''),
-('Ferrari', '');
+('Ferrari', 'SF90 XX Stradale'),
+('Ferrari', 'SF90 XX Spider'),
+('Ferrari', '812 Competizione'),
+('Ferrari', '812 Competizione A'),
+('Ferrari', 'Daytona SP3'),
+('Ferrari', 'Monza SP1'),
+('Ferrari', 'Monza SP2'),
+('Ferrari', 'LaFerrari'),
+('Ferrari', 'LaFerrari Aperta'),
+('Ferrari', 'Enzo Ferrari'),
+('Ferrari', 'F50'),
+('Ferrari', 'F40'),
+('Ferrari', 'GTO'),
+('Ferrari', '296 GT3');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Jaguar', 'F-Pace'),
+('Jaguar', 'E-Pace'),
+('Jaguar', 'I-Pace'),
+('Jaguar', 'F-Type');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Lamborghini', 'Temerario'),
+('Lamborghini', 'Revuelto'),
+('Lamborghini', 'Urus'),
+('Lamborghini', 'Huracan'),
+('Lamborghini', 'Countach LPI'),
+('Lamborghini', 'Sián FKP 37'),
+('Lamborghini', 'Sián Roadster'),
+('Lamborghini', 'Terzo Millenio'),
+('Lamborghini', 'Asterion'),
+('Lamborghini', 'Estoque');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Land Rover', 'Range Rover'),
+('Land Rover', 'Range Rover Sport'),
+('Land Rover', 'Range Rover Velar'),
+('Land Rover', 'Range Rover Evoque');
 
 INSERT INTO versions (brand_name, model_name, version_name)
 VALUES
