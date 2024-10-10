@@ -118,6 +118,36 @@ VALUES
 ('BMW', 'X6 M Competition'),
 ('BMW', 'X7 M60i');
 
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Bugatti', 'Tourbillon'),
+('Bugatti', 'W16 Mistral'),
+('Bugatti', 'Chiron'),
+('Bugatti', 'Coachbuilding'),
+('Bugatti', 'Bolide');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Dodge', 'Hornet'),
+('Dodge', 'Charger'),
+('Dodge', 'Challenger'),
+('Dodge', 'Durango');
+
+INSERT INTO models (brand_name, model_name)
+VALUES
+('Ferrari', 'SF90 Stradale'),
+('Ferrari', 'SF90 Spider'),
+('Ferrari', '296 GTB'),
+('Ferrari', '296 GTS'),
+('Ferrari', '12 Cilindri'),
+('Ferrari', '12 Cilindri Spider'),
+('Ferrari', 'Purosangue'),
+('Ferrari', 'Roma'),
+('Ferrari', 'Roma Spider'),
+('Ferrari', ''),
+('Ferrari', ''),
+('Ferrari', '');
+
 INSERT INTO versions (brand_name, model_name, version_name)
 VALUES
 ('Alfa Romeo', 'Tonale', 'Sprint'),
