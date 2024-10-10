@@ -23,4 +23,4 @@ spec:
     - protocol: TCP
       port: 5432
       targetPort: 5432
-      nodePort: 30000  # You can set a specific NodePort, or leave this out for a random port.
+      nodePort: 30000

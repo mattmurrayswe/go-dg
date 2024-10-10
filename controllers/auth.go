@@ -73,7 +73,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    expirationTime := time.Now().Add(15 * time.Minute)
+    expirationTime := time.Now().Add(100000 * time.Minute)
     claims := &Claims{
         Username: username,
         RegisteredClaims: jwt.RegisteredClaims{

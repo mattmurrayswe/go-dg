@@ -33,6 +33,7 @@ func main() {
 	http.HandleFunc("/models", middlewares.Authenticate(controllers.ListModels))      //GET
 	http.HandleFunc("/versions", middlewares.Authenticate(controllers.ListModelsWithVersions))      //GET
 	http.HandleFunc("/project", middlewares.Authenticate(controllers.CreateProject))     //POST
+	// http.HandleFunc("/project-card/buy", middlewares.Authenticate(controllers.BuyProjectCard)) // POST
 
 	fmt.Println("Server running")
 	log.Fatal(http.ListenAndServe(":8080", nil))
