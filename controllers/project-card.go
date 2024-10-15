@@ -131,3 +131,23 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Project created successfully"})
 }
+
+func WishList(w http.ResponseWriter, r *http.Request) {
+
+	type Wish struct {
+		OwnerID string `json:"owner_id"`
+		Brand string `json:"brand"`
+		Model string `json:"model"`
+		Year  string `json:"year"`
+	}
+
+	var wish Wish
+	json.NewDecoder(r.Body).Decode(&wish)
+
+	_, _ = db.DB.Exec(`
+		INSERT INTO wishlist (owner_id, brand, model, year) 
+		VALUES ($1, $2, $3)
+	`, wish.Brand, wish.Model, wish.Year)
+
+	
+}

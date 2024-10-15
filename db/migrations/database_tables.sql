@@ -43,7 +43,7 @@ CREATE TABLE dg_brands (
 CREATE TABLE models (
     id SERIAL PRIMARY KEY,
     brand_name VARCHAR(255),
-    model_name VARCHAR(255)
+    model_name VARCHAR(255),
     UNIQUE (brand_name, model_name)
 );
 
@@ -54,5 +54,12 @@ CREATE TABLE versions (
     version_name VARCHAR(255),
     UNIQUE(brand_name, model_name, version_name)
 );
+
+CREATE TABLE wishlist (
+    id SERIAL PRIMARY KEY,
+    brand VARCHAR(255),
+    model VARCHAR(255),
+    year VARCHAR(255)
+)
 
 -- SELECT setval('models_id_seq', 1, false);

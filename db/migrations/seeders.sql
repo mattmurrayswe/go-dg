@@ -45,7 +45,7 @@ VALUES
 ('Mini', ''),
 ('Porsche', ''),
 ('Rolls-Royce', ''),
-('Volkswagen');
+('Volkswagen', '');
 
 INSERT INTO models (brand_name, model_name)
 VALUES
@@ -124,7 +124,6 @@ VALUES
 ('Bugatti', 'Tourbillon'),
 ('Bugatti', 'W16 Mistral'),
 ('Bugatti', 'Chiron'),
-('Bugatti', 'Coachbuilding'),
 ('Bugatti', 'Bolide');
 
 INSERT INTO models (brand_name, model_name)

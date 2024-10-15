@@ -4,41 +4,38 @@ import (
 	"database/sql"
 	"dg/db"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
 
-var (
-	brands = []string{
-		"Acura", "Adamo", "Agrale", "Alfa Romeo", "Americar", "Asia", "Aston Martin", "Audi",
-		"Austin-Healey", "Avallone", "Beach", "Bentley", "Bianco", "BMW", "BRM", "Bugre", "Bugway",
-		"Buick", "BYD", "Cadillac", "Caoa Chery", "CBT", "Chamonix", "Cheda", "Chevrolet",
-		"Chrysler", "Citroën", "Daewoo", "Daihatsu", "De Soto", "DKW-Vemag", "Dodge", "Edsel",
-		"Effa", "Emis", "Engesa", "Envemo", "Farus", "Fercar Buggy", "Ferrari", "Fiat", "Ford",
-		"Fyber", "Geely", "GMC", "Gurgel", "GWM", "Hafei", "Honda", "Hudson", "Hummer", "Hyundai",
-		"Infiniti", "IVECO", "JAC", "Jaguar", "Jeep", "Jinbei", "Kia", "Lada", "Lamborghini",
-		"Land Rover", "Lexus", "Lifan", "Lincoln", "Lotus", "Mahindra", "Marcopolo", "Maserati",
-		"Mazda", "Mclaren", "Menon", "Mercedes-Benz", "Mercury", "MG", "Mini", "Mitsubishi", "Miura",
-		"Mobby", "Morris", "MP Lafer", "Neta", "Nissan", "Opel", "PAG", "Peugeot", "Plymouth",
-		"Pontiac", "Porsche", "Puma", "RAM", "Renault", "Rivian", "Rolls-Royce", "Saturn", "Seat",
-		"Seres", "Shrlby", "Smart", "Ssangyong", "Studebaker", "Subaru", "Sunbeam", "Suzuki", "TAC",
-		"Tesla", "Toyota", "Triumph", "Troller", "Volkswagen", "Volvo", "Wake", "Willys", "Willys Overland",
-	}
+type Brand struct {
+	BrandName string `json:"brand_name"`
+}
 
-	dgBrands = []string{
-		"Alfa Romeo", "Aston Martin", "Audi", "BMW", "Bugatti", "Dodge", "Ferrari", "Jaguar",
-		"Lamborghini", "Land Rover", "Lexus", "Maserati", "Mclaren", "Mercedes-Benz", "Mini",
-		"Porsche", "Rolls-Royce", "Volkswagen",
-	}
+type Model struct {
+	ID        int    `json:"id"`
+	BrandName string `json:"brand_name"`
+	ModelName string `json:"model_name"`
+}
 
-	brandsWithModels = map[string][]string{
-		"Alfa Romeo":   {"Giulia", "Stelvio", "Giulietta", "Stelvio Quadrifoglio", ""},
-		"Aston Martin": {},
-		"Audi":         {},
-		"BMW":          {},
-		"Bugatti":      {},
-	}
-)
+type Version struct {
+	ID          int    `json:"id"`
+	BrandName   string `json:"brand_name"`
+	ModelName   string `json:"model_name"`
+	VersionName string `json:"version_name"`
+}
+
+type BrandModels struct {
+	Brand  string   `json:"brand"`
+	Logo   string   `json:"logo"`
+	Site   string   `json:"data_source_website"`
+	Models []string `json:"models"`
+}
+
+type Brands struct {
+	Brands []string `json:"brands"`
+}
 
 func Status(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -47,16 +44,104 @@ func Status(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListBrands(w http.ResponseWriter, r *http.Request) {
+	rows, _ := db.DB.Query(`
+		SELECT brand_name
+		FROM brands
+	`)
+
+	var brands Brands
+	for rows.Next() {
+		var brand Brand
+		rows.Scan(&brand.BrandName)
+		brands.Brands = append(brands.Brands, brand.BrandName)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(brands)
 }
 
 func ListDgBrands(w http.ResponseWriter, r *http.Request) {
+
+	rows, _ := db.DB.Query(`
+		SELECT brand_name
+		FROM dg_brands
+	`)
+
+	var brands []string
+	for rows.Next() {
+		var brand string
+		rows.Scan(&brand)
+		brands = append(brands, brand)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dgBrands)
+	json.NewEncoder(w).Encode(brands)
+}
+
+type BrandModelsOnly struct {
+	BrandName string `json:"brand"`
+	ModelNames []string `json:models`
 }
 
 func ListModels(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("Listing Models")
+
+	rows, _ := db.DB.Query(`
+		SELECT *
+		FROM models
+	`)
+
+	var models []BrandModelsOnly
+	var brandIteration string
+	for rows.Next() {
+
+		var model, brand string
+		var brandModels BrandModelsOnly
+		rows.Scan(&model, &brand)
+		if brandIteration != brand {
+			brandModels.BrandName = brand
+		}
+		brandModels.ModelNames = append(brandModels.ModelNames, model)
+
+		models = append(models, )
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(models)
+}
+
+func ListModelsCount(w http.ResponseWriter, r *http.Request) {
+
+	var count int
+	db.DB.QueryRow(`
+		SELECT COUNT (*)
+		FROM models
+	`).Scan(&count)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(count)
+	// json.NewEncoder(w).Encode(fmt.Sprintf("%d models found", count))
+}
+
+func ListVersions(w http.ResponseWriter, r *http.Request) {
+
+	rows, _ := db.DB.Query(`
+		SELECT *
+		FROM versions
+	`)
+
+	var versions []Version
+	for rows.Next() {
+		var version Version
+		rows.Scan(&version.ID, &version.BrandName, &version.ModelName, &version.VersionName)
+		versions = append(versions, version)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(versions)
+}
+
+func ListModelsDetailed(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Query models with their brand and site
@@ -71,13 +156,6 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
-
-	type BrandModels struct {
-		Brand              string              `json:"brand"`
-		Logo               string              `json:"logo"`
-		Site               string              `json:"data_source_website"`
-		Models             []string            `json:"models"`
-	}
 
 	// Use a map to group models by brand and store the source site
 	brandModelsMap := make(map[string]BrandModels)
@@ -112,10 +190,10 @@ func ListModels(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// Create a new BrandModels entry for this brand
 			brandModelsMap[brandName] = BrandModels{
-				Brand:              brandName,
-				Site:               siteValue,
-				Logo:               logoValue,
-				Models:             []string{modelName},
+				Brand:  brandName,
+				Site:   siteValue,
+				Logo:   logoValue,
+				Models: []string{modelName},
 			}
 		}
 	}
@@ -168,10 +246,10 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 	defer rowsVersions.Close()
 
 	type BrandModels struct {
-		Brand  string   `json:"brand"`
-		Site   string   `json:"site"`
-		Logo   string   `json:"logo"`
-		Models []string `json:"models"` // List of concatenated model and version
+		Brand              string   `json:"brand"`
+		Site               string   `json:"site"`
+		Logo               string   `json:"logo"`
+		Models             []string `json:"models"`            // List of concatenated model and version
 		ModelsWithVersions []string `json:"models_w_versions"` // List of concatenated model and version
 	}
 
@@ -201,10 +279,10 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// Create a new BrandModels entry for this brand
 			brandModelsMap[brandName] = BrandModels{
-				Brand:  brandName,
-				Site:   site,
-				Logo:   logoValue,
-				Models: []string{}, // Initialize an empty slice for models with versions
+				Brand:              brandName,
+				Site:               site,
+				Logo:               logoValue,
+				Models:             []string{}, // Initialize an empty slice for models with versions
 				ModelsWithVersions: []string{}, // Initialize an empty slice for models with versions
 			}
 		}
@@ -260,4 +338,27 @@ func ListModelsWithVersions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		log.Printf("Error encoding JSON response: %v", err)
 	}
+}
+
+type VersionsOnly struct {
+	VersionsConcat []string `json:"versions_concat"`
+}
+
+func ListVersionsOnly(w http.ResponseWriter, r *http.Request) {
+
+	rows, _ := db.DB.Query(`
+		SELECT * FROM
+		versions
+	`)
+
+	var versionOnly VersionsOnly
+	for rows.Next() {
+		var version Version
+		rows.Scan(&version.ID, &version.BrandName, &version.ModelName, &version.VersionName)
+		fmt.Print(version.BrandName + version.ModelName + version.VersionName)
+		versionOnly.VersionsConcat = append(versionOnly.VersionsConcat, version.BrandName+` `+version.ModelName+` `+version.VersionName)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(versionOnly)
 }
